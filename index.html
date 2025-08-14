@@ -1,18 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <title>Mini HTML Proxy</title>
   <style>
-    body { font-family: sans-serif; }
-    #content { border: 1px solid #ccc; padding: 10px; min-height: 80vh; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f0f0f0;
+    }
+    input, button {
+      padding: 8px;
+      font-size: 16px;
+    }
+    #url {
+      width: 70%;
+    }
+    #content {
+      border: 1px solid #ccc;
+      background: #fff;
+      margin-top: 20px;
+      padding: 10px;
+      min-height: 80vh;
+      overflow: auto;
+    }
+    button {
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h1>Open Any Link</h1>
-  <input id="url" type="text" placeholder="Enter full URL (https://...)" style="width:80%">
+  <h1>Mini HTML Proxy</h1>
+  <input id="url" type="text" placeholder="Enter full URL (https://example.com)">
   <button id="go">Go</button>
-  <div id="content"></div>
+  <div id="content">Page content will appear here.</div>
 
   <script>
     const input = document.getElementById('url');
@@ -20,15 +41,32 @@
     const content = document.getElementById('content');
 
     button.addEventListener('click', async () => {
-      const url = encodeURIComponent(input.value);
-      const proxy = `https://api.allorigins.win/get?url=${url}`;
+      const rawUrl = input.value.trim();
+      if (!rawUrl) {
+        alert("Please enter a URL.");
+        return;
+      }
+
+      const encodedUrl = encodeURIComponent(rawUrl);
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodedUrl}`;
+
+      content.innerHTML = "Loading...";
+
       try {
-        const res = await fetch(proxy);
-        const data = await res.json();
+        const response = await fetch(proxyUrl);
+        const data = await response.json();
+
+        // Inject the fetched HTML into the content div
         content.innerHTML = data.contents;
-      } catch (e) {
-        content.innerHTML = 'Failed to load page.';
-        console.error(e);
+
+        // Fix relative links & resources
+        const base = document.createElement('base');
+        base.href = rawUrl;
+        document.head.appendChild(base);
+
+      } catch (err) {
+        content.innerHTML = "Failed to load page.";
+        console.error(err);
       }
     });
   </script>
